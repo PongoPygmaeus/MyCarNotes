@@ -1,0 +1,3 @@
+[submodule "MyCarNotesInfra"]
+	path = MyCarNotesInfra
+	url = https://github.com/PongoPygmaeus/MyCarNotesInfra
