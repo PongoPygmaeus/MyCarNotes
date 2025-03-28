@@ -1,154 +1,206 @@
 package entity
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 	"time"
 )
 
 func TestNewCar(t *testing.T) {
-	currentYear := time.Now().Year()
-	type Fuel int
-
-	const (
-		E100 Fuel = iota
-		E60
-		E30
-	)
-	type args struct {
-		name         string
-		manufacturer string
-		model        string
-		year         string
-		modelYear    string
-		fuelType     Fuel
-	}
-
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-		errMsg  string
+		name          string
+		input         func() (*Car, error)
+		expectedError error
 	}{
 		{
 			name: "valid car",
-			args: args{
-				name:         "Valid Name",
-				manufacturer: "Manufacturer",
-				model:        "Model",
-				year:         strconv.Itoa(currentYear),
-				modelYear:    "2023",
-				fuelType:     0,
+			input: func() (*Car, error) {
+				return NewCar("My Car", "Toyota", "Corolla", "2020", "2020", E100)
 			},
-			wantErr: false,
-		},
-		// Name validation tests
-		{
-			name:    "empty name",
-			args:    args{name: "", manufacturer: "M", model: "M", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "name cannot be empty",
+			expectedError: nil,
 		},
 		{
-			name:    "name too short",
-			args:    args{name: "Na", manufacturer: "M", model: "M", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "name should be between 3 and 130 characters",
+			name: "invalid name",
+			input: func() (*Car, error) {
+				return NewCar("", "Toyota", "Corolla", "2020", "2020", E60)
+			},
+			expectedError: errors.New("name cannot be empty"),
 		},
 		{
-			name:    "name too long",
-			args:    args{name: createString(131), manufacturer: "M", model: "M", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "name should be between 3 and 130 characters",
-		},
-		// Manufacturer validation tests
-		{
-			name:    "empty manufacturer",
-			args:    args{name: "Name", manufacturer: "", model: "M", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "manufacturer cannot be empty",
+			name: "invalid manufacturer",
+			input: func() (*Car, error) {
+				return NewCar("My Car", "", "Corolla", "2020", "2020", E30)
+			},
+			expectedError: errors.New("manufacturer cannot be empty"),
 		},
 		{
-			name:    "manufacturer too short",
-			args:    args{name: "Name", manufacturer: "Ma", model: "M", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "manufacturer must be between 3 and 150 characters",
-		},
-		// Model validation tests
-		{
-			name:    "empty model",
-			args:    args{name: "Name", manufacturer: "Manu", model: "", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "model cannot be empty",
+			name: "invalid model",
+			input: func() (*Car, error) {
+				return NewCar("My Car", "Toyota", "", "2020", "2020", E100)
+			},
+			expectedError: errors.New("model cannot be empty"),
 		},
 		{
-			name:    "model too short",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Mo", year: "2020", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "model must be between 3 and 150 characters",
-		},
-		// Year validation tests
-		{
-			name:    "invalid year length",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Model", year: "202", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "invalid year",
+			name: "invalid year",
+			input: func() (*Car, error) {
+				return NewCar("My Car", "Toyota", "Corolla", "202", "2020", E30)
+			},
+			expectedError: errors.New("invalid year"),
 		},
 		{
-			name:    "non-numeric year",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Model", year: "20ab", modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "invalid year",
+			name: "future year",
+			input: func() (*Car, error) {
+				futureYear := strconv.Itoa(time.Now().Year() + 2)
+				return NewCar("My Car", "Toyota", "Corolla", futureYear, "2020", E100)
+			},
+			expectedError: errors.New("year if out of the valid range"),
 		},
 		{
-			name:    "year too far in future",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Model", year: strconv.Itoa(currentYear + 2), modelYear: "2020"},
-			wantErr: true,
-			errMsg:  "year if out of the valid range",
-		},
-		// ModelYear validation tests
-		{
-			name:    "modelYear too short",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Model", year: "2020", modelYear: "20"},
-			wantErr: true,
-			errMsg:  "modelYear must be between 3 and 150 characters",
-		},
-		{
-			name:    "modelYear too long",
-			args:    args{name: "Name", manufacturer: "Manu", model: "Model", year: "2020", modelYear: createString(131)},
-			wantErr: true,
-			errMsg:  "modelYear must be between 3 and 150 characters",
+			name: "invalid model year",
+			input: func() (*Car, error) {
+				return NewCar("My Car", "Toyota", "Corolla", "2020", "", E30)
+			},
+			expectedError: errors.New("modelYear cannot be empty"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewCar(
-				tt.args.name,
-				tt.args.manufacturer,
-				tt.args.model,
-				tt.args.year,
-				tt.args.modelYear,
-				0,
-			)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewCar() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := tt.input()
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
 			}
-
-			if tt.wantErr && err.Error() != tt.errMsg {
-				t.Errorf("Expected error message '%s', got '%s'", tt.errMsg, err.Error())
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
 			}
 		})
 	}
 }
 
-// Helper to create long strings for validation
-func createString(length int) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = 'a'
+func TestValidateName(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedError error
+	}{
+		{"valid name", "Valid Car Name", nil},
+		{"empty name", "", errors.New("name cannot be empty")},
+		{"too short name", "a", errors.New("name should be between 3 and 130 characters")},
+		{"too long name", string(make([]byte, 131)), errors.New("name should be between 3 and 130 characters")},
 	}
-	return string(b)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateName(tt.input)
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
+			}
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func TestValidateManufacturer(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedError error
+	}{
+		{"valid manufacturer", "Toyota", nil},
+		{"empty manufacturer", "", errors.New("manufacturer cannot be empty")},
+		{"too short manufacturer", "a", errors.New("manufacturer must be between 3 and 150 characters")},
+		{"too long manufacturer", string(make([]byte, 151)), errors.New("manufacturer must be between 3 and 150 characters")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateManufacturer(tt.input)
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
+			}
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func TestValidateModel(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedError error
+	}{
+		{"valid model", "Corolla", nil},
+		{"empty model", "", errors.New("model cannot be empty")},
+		{"too short model", "a", errors.New("model must be between 3 and 150 characters")},
+		{"too long model", string(make([]byte, 151)), errors.New("model must be between 3 and 150 characters")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateModel(tt.input)
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
+			}
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func TestValidateYear(t *testing.T) {
+	currentYear := time.Now().Year()
+	tests := []struct {
+		name          string
+		input         string
+		expectedError error
+	}{
+		{"valid year", "2020", nil},
+		{"valid next year", strconv.Itoa(currentYear + 1), nil},
+		{"invalid length", "202", errors.New("invalid year")},
+		{"not a number", "abcd", errors.New("invalid year")},
+		{"future year", strconv.Itoa(currentYear + 2), errors.New("year if out of the valid range")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateYear(tt.input)
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
+			}
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func TestValidateModelYear(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedError error
+	}{
+		{"valid model year", "2020", nil},
+		{"empty model year", "", errors.New("modelYear cannot be empty")},
+		{"too short model year", "a", errors.New("modelYear must be between 3 and 150 characters")},
+		{"too long model year", string(make([]byte, 151)), errors.New("modelYear must be between 3 and 150 characters")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateModelYear(tt.input)
+			if (err != nil) != (tt.expectedError != nil) {
+				t.Errorf("expected error %v, got %v", tt.expectedError, err)
+			}
+			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
+				t.Errorf("expected error message %q, got %q", tt.expectedError.Error(), err.Error())
+			}
+		})
+	}
 }
