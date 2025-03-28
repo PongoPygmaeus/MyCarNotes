@@ -7,6 +7,7 @@ import (
 )
 
 type Car struct {
+	Id           int
 	Name         string
 	Manufacturer string
 	Model        string
@@ -23,7 +24,7 @@ const (
 	E30
 )
 
-func NewCar(name, manufacturer, model, year, modelYear string, fuelType Fuel) (*Car, error) {
+func NewCar(id int, name, manufacturer, model, year, modelYear string, fuelType Fuel) (*Car, error) {
 	if err := validateName(name); err != nil {
 		return nil, err
 	}
@@ -45,6 +46,7 @@ func NewCar(name, manufacturer, model, year, modelYear string, fuelType Fuel) (*
 	}
 
 	return &Car{
+		Id:           id,
 		Name:         name,
 		Manufacturer: manufacturer,
 		Model:        model,

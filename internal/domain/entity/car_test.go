@@ -16,35 +16,35 @@ func TestNewCar(t *testing.T) {
 		{
 			name: "valid car",
 			input: func() (*Car, error) {
-				return NewCar("My Car", "Toyota", "Corolla", "2020", "2020", E100)
+				return NewCar(1, "My Car", "Toyota", "Corolla", "2020", "2020", E100)
 			},
 			expectedError: nil,
 		},
 		{
 			name: "invalid name",
 			input: func() (*Car, error) {
-				return NewCar("", "Toyota", "Corolla", "2020", "2020", E60)
+				return NewCar(1, "", "Toyota", "Corolla", "2020", "2020", E60)
 			},
 			expectedError: errors.New("name cannot be empty"),
 		},
 		{
 			name: "invalid manufacturer",
 			input: func() (*Car, error) {
-				return NewCar("My Car", "", "Corolla", "2020", "2020", E30)
+				return NewCar(1, "My Car", "", "Corolla", "2020", "2020", E30)
 			},
 			expectedError: errors.New("manufacturer cannot be empty"),
 		},
 		{
 			name: "invalid model",
 			input: func() (*Car, error) {
-				return NewCar("My Car", "Toyota", "", "2020", "2020", E100)
+				return NewCar(1, "My Car", "Toyota", "", "2020", "2020", E100)
 			},
 			expectedError: errors.New("model cannot be empty"),
 		},
 		{
 			name: "invalid year",
 			input: func() (*Car, error) {
-				return NewCar("My Car", "Toyota", "Corolla", "202", "2020", E30)
+				return NewCar(1, "My Car", "Toyota", "Corolla", "202", "2020", E30)
 			},
 			expectedError: errors.New("invalid year"),
 		},
@@ -52,14 +52,14 @@ func TestNewCar(t *testing.T) {
 			name: "future year",
 			input: func() (*Car, error) {
 				futureYear := strconv.Itoa(time.Now().Year() + 2)
-				return NewCar("My Car", "Toyota", "Corolla", futureYear, "2020", E100)
+				return NewCar(300, "My Car", "Toyota", "Corolla", futureYear, "2020", E100)
 			},
 			expectedError: errors.New("year if out of the valid range"),
 		},
 		{
 			name: "invalid model year",
 			input: func() (*Car, error) {
-				return NewCar("My Car", "Toyota", "Corolla", "2020", "", E30)
+				return NewCar(10, "My Car", "Toyota", "Corolla", "2020", "", E30)
 			},
 			expectedError: errors.New("modelYear cannot be empty"),
 		},
